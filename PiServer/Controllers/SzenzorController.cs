@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR.Client;
 using PiServer.DataManagers;
 using PiServer.DTOs;
 using System;
@@ -27,7 +28,7 @@ namespace PiServer.Controllers
                 return BadRequest("Szenzor is null.");
             }
 
-            if(_szenzorManager.Login(szenzorDTO.Id))
+            if (_szenzorManager.Login(szenzorDTO.Id, szenzorDTO.Tipus, Request.HttpContext.Connection.RemoteIpAddress))
             {
                 return Ok();
             }

@@ -31,6 +31,8 @@ namespace PiServer
             services.AddAutoMapper(typeof(Startup));
             services.AddDbContext<PiDbContext>(opts => opts.UseSqlServer(Configuration["ConnectionString:PiDB"]));
 
+            services.AddSingleton<IrrigationServerConnection>();
+            services.AddHostedService<IrrigationServerConnection>(provider => provider.GetService<IrrigationServerConnection>());
             services.AddScoped<ISzenzorManager, SzenzorManager>();
 
             services.AddControllers();
