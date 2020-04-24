@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using PiServer.DTOs;
 using PiServer.Models;
@@ -13,11 +14,19 @@ namespace PiServer.Context
     public class IrrigationServerConnection : IHostedService
     {
         private HubConnection hubConnection;
+        private string irrigationServerUrl;
+        private string piAzonosito;
+
+        public IrrigationServerConnection(IConfiguration configuration)
+        {
+            irrigationServerUrl = configuration["ConnectionString:IrrigationServerUrl"];
+            piAzonosito = configuration["PI_ID"];
+        }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             hubConnection = new HubConnectionBuilder()
-                .WithUrl("https://localhost:44353/ws/pi")
+                .WithUrl($"{irrigationServerUrl}/ws/pi")
                 .WithAutomaticReconnect()
                 .Build();
 
@@ -25,12 +34,16 @@ namespace PiServer.Context
             {
                 await Task.Delay(new Random().Next(0, 5) * 1000);
                 await hubConnection.StartAsync();
+                await PiLogin();
             };
 
             hubConnection.Reconnected += async (error) =>
             {
                 await PiLogin();
             };
+
+            hubConnection.On<string>("RegisterPi", async (azonosito) => await RegisterPi(azonosito));
+            hubConnection.On<OntozesDTO>("Ontozes", async (ontozesDTO) => await Ontozes(ontozesDTO));
 
             await hubConnection.StartAsync();
             await PiLogin();
@@ -76,7 +89,7 @@ namespace PiServer.Context
                 bool connected = false;
                 while (!connected)
                 {
-                    var response = await hubConnection.InvokeCoreAsync<PiLoginResponseDTO>("PiLogin", new object[] { "12345" });
+                    var response = await hubConnection.InvokeCoreAsync<PiLoginResponseDTO>("PiLogin", new object[] { piAzonosito });
                     connected = response.Success;
                     await Task.Delay(new Random().Next(0, 5) * 5000);
                 }
@@ -84,6 +97,38 @@ namespace PiServer.Context
             catch(Exception e)
             {
                 
+            }
+        }
+
+        private async Task RegisterPi(string azonosito)
+        {
+            try
+            {
+                var response = new PiRegisterDTO()
+                {
+                    IsSuccessful = true
+                };
+                await hubConnection.InvokeCoreAsync("PiRegister", new object[] { response });
+            }
+            catch(Exception e)
+            {
+
+            }
+        }
+
+        private async Task Ontozes(OntozesDTO ontozesDTO)
+        {
+            try
+            {
+                var response = new OntozesResponseDTO()
+                {
+                    IsSuccessful = true
+                };
+                await hubConnection.InvokeCoreAsync("Ontozes", new object[] { response });
+            }
+            catch (Exception e)
+            {
+
             }
         }
     }

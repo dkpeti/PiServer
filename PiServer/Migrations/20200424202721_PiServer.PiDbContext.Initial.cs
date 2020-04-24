@@ -2,7 +2,7 @@
 
 namespace PiServer.Migrations
 {
-    public partial class PiServerPiDbContextInitialDatabase : Migration
+    public partial class PiServerPiDbContextInitial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

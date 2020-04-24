@@ -1,0 +1,42 @@
+version: '3.4'
+
+networks:
+  pi-network:
+    driver: bridge 
+
+services:
+  pi-server:
+    image: pi-server:latest
+    depends_on:
+      - pi-db
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"     
+    environment:
+      ConnectionString__Host: pi-db
+      ConnectionString__DB: pi
+      ConnectionString__Username: pi-user
+      ConnectionString__Password: pi-password
+      ConnectionString__IrrigationServerUrl: http://192.168.1.2:8000
+      PI_ID: 12345
+    networks:
+      - pi-network  
+  
+  pi-db:
+    image: postgres:latest
+    ports:
+      - 5432
+    restart: always
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "pi-user"
+      POSTGRES_PASSWORD: "pi-password"
+      POSTGRES_DB: "pi"
+    networks:
+      - pi-network
+volumes:
+  db_volume:
