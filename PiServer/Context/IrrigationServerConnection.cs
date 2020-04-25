@@ -32,9 +32,7 @@ namespace PiServer.Context
 
             hubConnection.Closed += async (error) =>
             {
-                await Task.Delay(new Random().Next(0, 5) * 1000);
-                await hubConnection.StartAsync();
-                await PiLogin();
+                await Connect();
             };
 
             hubConnection.Reconnected += async (error) =>
@@ -45,8 +43,20 @@ namespace PiServer.Context
             hubConnection.On<string>("RegisterPi", async (azonosito) => await RegisterPi(azonosito));
             hubConnection.On<OntozesDTO>("Ontozes", async (ontozesDTO) => await Ontozes(ontozesDTO));
 
-            await hubConnection.StartAsync();
-            await PiLogin();
+            Connect();
+        }
+
+        public async Task Connect()
+        {
+            try
+            {
+                await hubConnection.StartAsync();
+                await PiLogin();
+            }
+            catch (Exception e) {
+                await Task.Delay(new Random().Next(0, 5) * 1000);
+                Connect();
+            }
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
